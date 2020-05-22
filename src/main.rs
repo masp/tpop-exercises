@@ -1,3 +1,5 @@
+use std::io::{self, Read, stdin, Write};
+
 fn partition(vs: &mut [i32]) -> (&mut [i32], &mut [i32]) {
     let pivot_pos: usize = rand::random::<usize>() % vs.len();
     // Swap pivot to beginning of array, and put smallest elements towards pivot
@@ -11,7 +13,7 @@ fn partition(vs: &mut [i32]) -> (&mut [i32], &mut [i32]) {
             vs.swap(n, last);
         }
     }
-    vs.swap(0, last + 1);
+    vs.swap(0, last);
 
     let (p1, p2) = vs.split_at_mut(last);
     (p1, &mut p2[1..]) // exclude pivot element
@@ -26,10 +28,40 @@ fn quicksort(vs: &mut [i32]) {
     }
 }
 
+fn quicksort_flat(vs: &mut [i32]) {
+    let mut parts = Vec::new();
+    parts.push(vs);
+    while let Some(p) = parts.pop() {
+        if p.len() > 1 {
+            let (p1, p2) = partition(p);
+            parts.push(p1);
+            parts.push(p2);
+        }
+    }
+}
+
+fn read_list() -> Result<Vec<i32>, Box<dyn std::error::Error>> {
+    let mut buf = String::new();
+    stdin().read_line(&mut buf)?;
+
+    let mut vs = Vec::new();
+    for num in buf.split_whitespace() {
+        match num.parse::<i32>() {
+            Ok(n) => vs.push(n),
+            Err(e) => return Err(e.into()),
+        }
+    }
+    Ok(vs)
+}
+
 fn main() {
-    let mut values: [i32; 5] = [5, 3, 4, 1, 2];
+    print!("Enter comma-separated list: ");
+    io::stdout().flush().unwrap();
 
-    quicksort(&mut values);
-
-    println!("{:?}", values);
+    if let Ok(mut values) = read_list() {
+        quicksort_flat(&mut values[..]);
+        println!("{:?}", values);
+    } else {
+        println!("invalid list");
+    }
 }
